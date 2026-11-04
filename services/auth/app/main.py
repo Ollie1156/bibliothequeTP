@@ -5,10 +5,11 @@ import bcrypt
 import jwt
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
+
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_db
 from app.models import User
 
@@ -20,6 +21,14 @@ TOKEN_EXPIRE_MINUTES = 60
 
 app = FastAPI(title="Service Auth")
 
+app = FastAPI(title="Service Auth")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class SignupRequest(BaseModel):
     username: str = Field(min_length=3, max_length=50)

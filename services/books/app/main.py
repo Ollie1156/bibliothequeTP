@@ -1,6 +1,7 @@
 from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -10,6 +11,15 @@ from app.database import get_db
 from app.models import UserBook
 
 app = FastAPI(title="Service Books")
+
+app = FastAPI(title="Service Books")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 Status = Literal["à lire", "en cours", "lu"]
 
