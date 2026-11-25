@@ -1,0 +1,16 @@
+# PersistentVolumeClaim : la "demande" de stockage faite par PostgreSQL.
+# Kubernetes l'associe au PV ci-dessus (même storageClassName, taille suffisante).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      app: postgres

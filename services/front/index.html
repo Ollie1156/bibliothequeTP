@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ma bibliothèque</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+    input, select, button { padding: 0.5rem; margin: 0.25rem 0; }
+    li { margin: 0.5rem 0; }
+    #message { color: #b00020; min-height: 1.5rem; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>📚 Ma bibliothèque</h1>
+  <p id="message"></p>
+
+  <section id="auth-section">
+    <h2>Connexion</h2>
+    <input id="username" placeholder="Nom d'utilisateur"><br>
+    <input id="password" type="password" placeholder="Mot de passe"><br>
+    <button onclick="login()">Se connecter</button>
+    <button onclick="signup()">Créer un compte</button>
+  </section>
+
+  <section id="books-section" class="hidden">
+    <button onclick="logout()">Se déconnecter</button>
+    <h2>Ajouter un livre</h2>
+    <input id="title" placeholder="Titre">
+    <input id="author" placeholder="Auteur">
+    <button onclick="addBook()">Ajouter</button>
+
+    <h2>Mes livres</h2>
+    <ul id="book-list"></ul>
+  </section>
+
+  <script>
+    // Les appels passent par le reverse proxy Nginx du front :
+    // /api/auth/...  -> service auth  (port 4001)
+    // /api/books/... -> service books (port 4002)
+    const AUTH_URL = "/api/auth";
+    const BOOKS_URL = "/api/books";
+    const STATUSES = ["à lire", "en cours", "lu"];
+
+    let token = sessionStorage.getItem("token");
+
+    function show(text) {
+      document.getElementById("message").textContent = text;
+    }
+
+    async function call(url, method, body) {
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = "Bearer " + token;
+      const response = await fetch(url, {
+        method: method,
+        headers: headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(typeof data.detail === "string" ? data.detail : "Données invalides");
+      }
+      return data;
+    }
+
+    async function signup() {
+      try {
+        await call(AUTH_URL + "/users/signup", "POST", {
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value,
+        });
+        show("Compte créé, tu peux te connecter.");
+      } catch (e) { show(e.message); }
+    }
+
+    async function login() {
+      try {
+        const data = await call(AUTH_URL + "/users/login", "POST", {
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value,
+        });
+        token = data.access_token;
+        sessionStorage.setItem("token", token);
+        show("");
+        refresh();
+      } catch (e) { show(e.message); }
+    }
+
+    function logout() {
+      token = null;
+      sessionStorage.removeItem("token");
+      refresh();
+    }
+
+    async function addBook() {
+      try {
+        await call(BOOKS_URL + "/books", "POST", {
+          title: document.getElementById("title").value,
+          author: document.getElementById("author").value || null,
+        });
+        document.getElementById("title").value = "";
+        document.getElementById("author").value = "";
+        show("");
+        loadBooks();
+      } catch (e) { show(e.message); }
+    }
+
+    async function changeStatus(id, status) {
+      try {
+        await call(BOOKS_URL + "/books/" + id + "/status", "PATCH", { status: status });
+        show("");
+      } catch (e) { show(e.message); }
+    }
+
+    async function loadBooks() {
+      try {
+        const books = await call(BOOKS_URL + "/books", "GET");
+        const list = document.getElementById("book-list");
+        list.innerHTML = "";
+        for (const book of books) {
+          const li = document.createElement("li");
+          li.append(book.title + (book.author ? " — " + book.author : "") + " ");
+          const select = document.createElement("select");
+          for (const s of STATUSES) {
+            const option = document.createElement("option");
+            option.value = s;
+            option.textContent = s;
+            option.selected = (s === book.status);
+            select.appendChild(option);
+          }
+          select.onchange = () => changeStatus(book.id, select.value);
+          li.appendChild(select);
+          list.appendChild(li);
+        }
+      } catch (e) {
+        show(e.message);
+        logout();
+      }
+    }
+
+    function refresh() {
+      const connected = token !== null;
+      document.getElementById("auth-section").classList.toggle("hidden", connected);
+      document.getElementById("books-section").classList.toggle("hidden", !connected);
+      if (connected) loadBooks();
+    }
+
+    refresh();
+  </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+# Environnement de DÉVELOPPEMENT : toute l'application en une commande
+#   docker compose up --build
+# Puis ouvrir http://localhost:3000
+#
+# Les secrets (mots de passe, clé JWT) sont lus depuis le fichier .env,
+# qui n'est PAS versionné (voir .env.example pour le modèle).
+
+services:
+  # ---------- Base de données ----------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-bibliotheque}
+      POSTGRES_USER: ${DB_USER:?DB_USER manquant dans .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD manquant dans .env}
+    volumes:
+      # Volume nommé : les données survivent à un "docker compose down"
+      - postgres-data:/var/lib/postgresql/data
+      # Script de création des tables, exécuté au premier démarrage
+      - ./deploy/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"   # 5433 côté PC pour ne pas entrer en conflit avec ton PostgreSQL local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ---------- Microservice d'authentification ----------
+  auth:
+    build: ./services/auth
+    image: ghcr.io/ollie1156/bibliotheque-auth:dev
+    restart: unless-stopped
+    environment: &backend-env
+      DB_HOST: postgres          # nom du service ci-dessus = nom DNS sur le réseau Compose
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-bibliotheque}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET manquant dans .env}
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy   # attend que la base accepte les connexions
+    ports:
+      - "4001:4001"   # accès direct à la doc Swagger : http://localhost:4001/docs
+
+  # ---------- Microservice de gestion des livres ----------
+  books:
+    build: ./services/books
+    image: ghcr.io/ollie1156/bibliotheque-books:dev
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4002:4002"   # http://localhost:4002/docs
+
+  # ---------- Interface web + reverse proxy ----------
+  front:
+    build: ./services/front
+    image: ghcr.io/ollie1156/bibliotheque-front:dev
+    restart: unless-stopped
+    depends_on:
+      auth:
+        condition: service_healthy
+      books:
+        condition: service_healthy
+    ports:
+      - "3000:8080"
+
+volumes:
+  postgres-data:
