@@ -16,16 +16,21 @@ from app.models import User
 load_dotenv()
 
 JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    # On refuse de démarrer sans secret : mieux vaut un échec visible qu'une faille.
+    raise RuntimeError("La variable d'environnement JWT_SECRET est obligatoire")
 JWT_ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 60
 
-app = FastAPI(title="Service Auth")
+# Origines autorisées pour le CORS, configurables (ConfigMap en Kubernetes).
+# Avec le reverse proxy Nginx du front, le navigateur reste sur la même origine.
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 
 app = FastAPI(title="Service Auth")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

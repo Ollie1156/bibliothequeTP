@@ -35,8 +35,11 @@
   </section>
 
   <script>
-    const AUTH_URL = "http://localhost:4001";
-    const BOOKS_URL = "http://localhost:4002";
+    // Les appels passent par le reverse proxy Nginx du front :
+    // /api/auth/...  -> service auth  (port 4001)
+    // /api/books/... -> service books (port 4002)
+    const AUTH_URL = "/api/auth";
+    const BOOKS_URL = "/api/books";
     const STATUSES = ["à lire", "en cours", "lu"];
 
     let token = sessionStorage.getItem("token");

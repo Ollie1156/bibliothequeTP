@@ -1,0 +1,17 @@
+# Tout ce qui n'est pas nécessaire à l'image est exclu du contexte de build :
+# build plus rapide, image plus légère, et aucun secret embarqué.
+.env
+*.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.idea/
+.vscode/
+.git/
+.gitignore
+Dockerfile
+.dockerignore
+*.md
+tests/

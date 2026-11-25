@@ -1,6 +1,16 @@
+# --- Secrets : ne jamais versionner ---
 .env
+*.env
+!.env.example
+# Secret Kubernetes rempli avec de vraies valeurs (seul l'exemple est versionné)
+deploy/secret.yaml
+
+# --- Python ---
 .venv/
+venv/
 __pycache__/
 *.pyc
+
+# --- IDE ---
 .idea/
 .vscode/

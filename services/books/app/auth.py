@@ -8,6 +8,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 load_dotenv()
 
 JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    # On refuse de démarrer sans secret : mieux vaut un échec visible qu'une faille.
+    raise RuntimeError("La variable d'environnement JWT_SECRET est obligatoire")
 JWT_ALGORITHM = "HS256"
 
 bearer = HTTPBearer()

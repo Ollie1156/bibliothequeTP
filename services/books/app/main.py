@@ -1,3 +1,4 @@
+import os
 from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -10,13 +11,15 @@ from app.auth import get_current_user_id
 from app.database import get_db
 from app.models import UserBook
 
-app = FastAPI(title="Service Books")
+# Origines autorisées pour le CORS, configurables (ConfigMap en Kubernetes).
+# Avec le reverse proxy Nginx du front, le navigateur reste sur la même origine.
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 
 app = FastAPI(title="Service Books")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
