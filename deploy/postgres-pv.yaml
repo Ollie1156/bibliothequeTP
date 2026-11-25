@@ -1,0 +1,19 @@
+# PersistentVolume : un espace disque réel, ici un dossier sur le nœud du cluster.
+# hostPath convient pour un cluster local à un seul nœud (Docker Desktop).
+# En production cloud, on utiliserait un disque géré (provisionnement dynamique).
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+  labels:
+    app: postgres
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain   # les données restent si le PVC est supprimé
+  storageClassName: manual
+  hostPath:
+    path: /data/bibliotheque-postgres
+    type: DirectoryOrCreate

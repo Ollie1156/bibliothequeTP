@@ -1,0 +1,39 @@
+# Point d'entrée du déploiement :  kubectl apply -k deploy/
+# Kustomize (intégré à kubectl) applique toutes les ressources listées,
+# dans le namespace "bibliotheque", avec les bons tags d'image.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: bibliotheque
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - postgres-pv.yaml
+  - postgres-pvc.yaml
+  - postgres-deployment.yaml
+  - postgres-service.yaml
+  - auth-deployment.yaml
+  - auth-service.yaml
+  - books-deployment.yaml
+  - books-service.yaml
+  - front-deployment.yaml
+  - front-service.yaml
+  # secret.example.yaml n'est volontairement PAS listé : le Secret est créé à part.
+
+# Crée la ConfigMap "postgres-init" à partir du script SQL (même fichier
+# que celui utilisé par docker-compose : une seule source de vérité).
+configMapGenerator:
+  - name: postgres-init
+    files:
+      - init.sql
+
+# Tags des images. "dev" = images construites en local par docker compose.
+# Le pipeline CI/CD remplace ce tag par la version (ex : v1.0.0).
+images:
+  - name: ghcr.io/ollie1156/bibliotheque-auth
+    newTag: dev
+  - name: ghcr.io/ollie1156/bibliotheque-books
+    newTag: dev
+  - name: ghcr.io/ollie1156/bibliotheque-front
+    newTag: dev

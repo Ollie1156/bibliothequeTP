@@ -1,0 +1,11 @@
+# Configuration NON sensible, partagée par les services auth et books.
+# Les mots de passe et la clé JWT sont dans le Secret, pas ici.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  DB_HOST: postgres        # nom du Service PostgreSQL = nom DNS dans le cluster
+  DB_PORT: "5432"
+  DB_NAME: bibliotheque
+  CORS_ORIGINS: "http://localhost:3000,http://localhost:8080"

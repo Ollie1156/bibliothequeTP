@@ -1,0 +1,6 @@
+# Un espace de noms dédié : toutes les ressources de l'appli sont regroupées
+# et peuvent être supprimées d'un coup (kubectl delete namespace bibliotheque).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bibliotheque
