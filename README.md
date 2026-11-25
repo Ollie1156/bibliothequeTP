@@ -227,3 +227,4 @@ Conformément aux règles du TP :
   moi, avec l'aide de l'IA pour certaines explications.
 - Tout le code généré a été relu, testé sur mon poste (Docker Compose et
   Kubernetes Docker Desktop) et adapté à mon architecture.
+- - J'ai identifié et corrigé un problème de healthcheck du front (localhost résolu en IPv6 alors que Nginx écoutait en IPv4), dans la branche fix/front-healthcheck.
